@@ -1,0 +1,29 @@
+# Vendor SDK, docs and binaries (not redistributed)
+Resources/
+
+# Exported recordings
+xm125-recording-*.json
+recordings/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+
+# Python (tooling only)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+*.log
+.DS_Store
+Thumbs.db

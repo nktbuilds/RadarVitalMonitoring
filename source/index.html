@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XM125 Vital Signs Monitor</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <h1>XM125 Radar Vital Signs</h1>
+      </div>
+      <div id="status" class="status" data-kind="idle">Initialising…</div>
+    </header>
+
+    <main class="layout">
+      <div class="top-row">
+        <section class="panel controls">
+          <h2>Connection</h2>
+          <form id="config-form" autocomplete="off">
+            <div class="field">
+              <label for="port-list">Serial port</label>
+              <div class="port-row">
+                <select id="port-list" name="portList">
+                  <option value="">— choose on Connect —</option>
+                </select>
+                <button id="add-port-btn" type="button" class="ghost" title="Grant access to a new serial port">
+                  Add…
+                </button>
+              </div>
+            </div>
+            <p class="hint">
+              Pick a previously authorized port, or click Connect / Add… to choose one.
+              Select the XM125's USB-serial device.
+            </p>
+
+            <div class="field">
+              <label for="baudRate">Baud rate</label>
+              <select id="baudRate" name="baudRate">
+                <option value="115200">115200</option>
+                <option value="256000">256000</option>
+                <option value="460800" selected>460800 (default)</option>
+                <option value="576000">576000</option>
+              </select>
+            </div>
+            <p class="hint">
+              The SparkFun XM125 has no hardware flow control; rates above 460800 can
+              overflow the RX buffer and corrupt the JSON header stream.
+            </p>
+
+            <h2>Radar Settings</h2>
+            <div class="field-grid">
+              <div class="field">
+                <div class="field-label">
+                  <label for="startPoint">Start point</label>
+                  <button type="button" class="help-btn" data-help="startPoint" aria-label="Help: Start point">?</button>
+                </div>
+                <input id="startPoint" name="startPoint" type="number" value="80" min="-275" max="1000" step="1" />
+              </div>
+              <div class="field">
+                <div class="field-label">
+                  <label for="numPoints">Num points</label>
+                  <button type="button" class="help-btn" data-help="numPoints" aria-label="Help: Number of points">?</button>
+                </div>
+                <input id="numPoints" name="numPoints" type="number" value="15" min="1" max="160" step="1" />
+              </div>
+              <div class="field">
+                <div class="field-label">
+                  <label for="stepLength">Step length</label>
+                  <button type="button" class="help-btn" data-help="stepLength" aria-label="Help: Step length">?</button>
+                </div>
+                <input id="stepLength" name="stepLength" type="number" value="8" min="1" max="48" step="1" />
+              </div>
+              <div class="field">
+                <div class="field-label">
+                  <label for="profile">Profile</label>
+                  <button type="button" class="help-btn" data-help="profile" aria-label="Help: Profile">?</button>
+                </div>
+                <input id="profile" name="profile" type="number" value="3" min="1" max="5" step="1" />
+              </div>
+              <div class="field">
+                <div class="field-label">
+                  <label for="hwaas">HWAAS</label>
+                  <button type="button" class="help-btn" data-help="hwaas" aria-label="Help: HWAAS">?</button>
+                </div>
+                <input id="hwaas" name="hwaas" type="number" value="32" min="1" max="511" step="1" />
+              </div>
+              <div class="field">
+                <div class="field-label">
+                  <label for="receiverGain">Receiver gain</label>
+                  <button type="button" class="help-btn" data-help="receiverGain" aria-label="Help: Receiver gain">?</button>
+                </div>
+                <input id="receiverGain" name="receiverGain" type="number" value="16" min="0" max="23" step="1" />
+              </div>
+              <div class="field">
+                <div class="field-label">
+                  <label for="updateRate">Update rate (Hz)</label>
+                  <button type="button" class="help-btn" data-help="updateRate" aria-label="Help: Update rate">?</button>
+                </div>
+                <input id="updateRate" name="updateRate" type="number" value="20" min="1" max="100" step="1" />
+              </div>
+            </div>
+            <p id="range-info" class="range-info"></p>
+            <p class="hint">Step length must divide or be a multiple of 24. ~2.5 mm per step.</p>
+          </form>
+
+          <div class="actions">
+            <button id="connect-btn" class="primary" type="button">Connect</button>
+            <button id="disconnect-btn" type="button" disabled>Disconnect</button>
+            <button id="demo-btn" type="button" class="ghost">Demo</button>
+            <button id="preset-btn" type="button" class="ghost">Vitals preset</button>
+          </div>
+        </section>
+
+        <section class="panel readouts">
+          <div class="readout heart">
+            <span class="readout-label">Heart rate</span>
+            <span class="readout-value"><span id="hr-value">--</span><span class="unit">BPM</span></span>
+            <div class="readout-sub-row">
+              <span id="hr-cue" class="cue"></span>
+              <span id="hr-confidence" class="readout-sub">no signal</span>
+            </div>
+          </div>
+          <div class="readout breath">
+            <span class="readout-label">Breathing rate</span>
+            <span class="readout-value"><span id="rr-value">--</span><span class="unit">RPM</span></span>
+            <div class="readout-sub-row">
+              <span id="rr-cue" class="cue"></span>
+              <span id="rr-confidence" class="readout-sub">no signal</span>
+            </div>
+          </div>
+          <div class="readout-meta">
+            <div><span class="meta-key">Target</span><span id="target-info" class="meta-val">--</span></div>
+            <div><span class="meta-key">Stream</span><span id="stats" class="meta-val">--</span></div>
+            <div><span class="meta-key">Lock</span><span id="lock-info" class="meta-val">--</span></div>
+          </div>
+          <p class="caveat">
+            Heart rate comes from tiny chest motion — stay still and breathe normally.
+            It may show <code>--</code> until ~8 s of stable data accumulates.
+          </p>
+        </section>
+      </div>
+
+      <section class="panel chart-panel">
+        <div class="chart-head">
+          <h2>Amplitude vs distance</h2>
+          <span class="chart-note">target bin highlighted</span>
+        </div>
+        <div class="chart-box"><canvas id="amplitude-chart"></canvas></div>
+      </section>
+
+      <div class="waveforms">
+        <section class="panel chart-panel">
+          <div class="chart-head"><h2>Unwrapped phase</h2></div>
+          <div class="chart-box"><canvas id="phase-chart"></canvas></div>
+        </section>
+
+        <section class="panel chart-panel">
+          <div class="chart-head"><h2>Breathing waveform</h2><span class="chart-note">0.2–0.5 Hz</span></div>
+          <div class="chart-box"><canvas id="breathing-chart"></canvas></div>
+        </section>
+
+        <section class="panel chart-panel">
+          <div class="chart-head"><h2>Heart waveform</h2><span class="chart-note">1.0–2.5 Hz</span></div>
+          <div class="chart-box"><canvas id="heart-chart"></canvas></div>
+        </section>
+      </div>
+
+      <section class="panel log-panel">
+        <div class="chart-head">
+          <h2>Console</h2>
+          <div class="rec-controls">
+            <button id="record-btn" type="button" class="ghost">Record</button>
+            <button id="export-btn" type="button" class="ghost" disabled>Export</button>
+            <label class="file-btn" title="Load a recording and replay it">
+              Replay
+              <input id="replay-input" type="file" accept="application/json,.json" hidden />
+            </label>
+          </div>
+        </div>
+        <div id="log" class="log"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Web Serial requires Chromium (Chrome/Edge) and a secure context (localhost or HTTPS).
+      Serve this folder over HTTP — e.g. <code>python3 -m http.server</code>.
+    </footer>
+
+    <div id="help-popover" class="popover" role="tooltip" hidden></div>
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>
